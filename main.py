@@ -4,10 +4,10 @@ import queue
 import config
 from enum import Enum
 import os
+import logging
 
-
+logging.basicConfig(level='INFO')
 exit_status = 0
-
 
 class Event:
     def __init__(self, type, value):
@@ -21,10 +21,10 @@ class EventType(Enum):
 
 
 try:
-    ser = serial.Serial(config.PORT, config.BPS)
     import db
+    ser = serial.Serial(config.PORT, config.BPS)
 except Exception as e:
-    print(e)
+    logging.error('[{}] {}'.format(db.get_time(),e))
     os._exit(0)
 
 que = queue.Queue()
@@ -39,7 +39,6 @@ def receive_thread():
             card_id = []
             for i in range(0, 4):
                 card_id.append(int.from_bytes(ser.read(1),'little'))
-            print(card_id)
             if db.verify(card_id):
                 unlock()
             else:
@@ -64,6 +63,7 @@ def di():
 if __name__ == "__main__":
     threading.Thread(target=receive_thread).start()
     threading.Thread(target=send_thread).start()
+
     print('Android Smart Lock start')
     try:
         input()

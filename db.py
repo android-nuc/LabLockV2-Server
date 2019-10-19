@@ -4,6 +4,7 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 import model
 import datetime
+import logging
 
 data_db = sqlalchemy.create_engine(config.DB)
 base = declarative_base(data_db)
@@ -17,12 +18,15 @@ def verify(id: list) -> bool:
             2] and model.User.card_4 == id[3]).first()
     if user is None:
         log_deny(id)
+        logging.warning('[{}] log deny card:{}'.format(get_time(),id))
         return False
     if user.enabled:
         log_success(user.uid)
+        logging.info('[{}] log success card:{}'.format(get_time(),id))
         return True
     else:
         log_deny(id)
+        logging.warning('[{}] log not enabled card:{}'.format(get_time(),id))
         return False
 
 
