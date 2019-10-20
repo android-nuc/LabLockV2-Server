@@ -5,6 +5,7 @@ from sqlalchemy.orm import sessionmaker
 import model
 import datetime
 import logging
+from sqlalchemy import and_, or_
 
 data_db = sqlalchemy.create_engine(config.DB, pool_recycle=1800)
 base = declarative_base(data_db)
@@ -13,9 +14,9 @@ cursor = sessionmaker(bind=data_db)
 
 def verify(id: list) -> bool:
     session = cursor()
-    user = session.query(model.User).filter(
-        model.User.card_1 == id[0] and model.User.card_2 == id[1] and model.User.card_3 == id[
-            2] and model.User.card_4 == id[3]).first()
+    user = session.query(model.User).filter(and_(
+        model.User.card_1 == id[0], model.User.card_2 == id[1], model.User.card_3 == id[
+            2], model.User.card_4 == id[3])).first()
     if user is None:
         log_deny(id)
         logging.warning('[{}] log deny card:{}'.format(get_time(), id))
@@ -31,8 +32,6 @@ def verify(id: list) -> bool:
         logging.warning('[{}] log not enabled card:{}'.format(get_time(), id))
         session.close()
         return False
-
-
 
 
 def log_success(uid):
