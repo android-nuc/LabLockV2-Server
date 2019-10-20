@@ -9,9 +9,9 @@ import logging
 logging.basicConfig(level='INFO')
 exit_status = 0
 
-class Event:
-    def __init__(self, type, value):
-        self.type = type
+
+class SendItem:
+    def __init__(self, value):
         self.value = value
 
 
@@ -22,9 +22,10 @@ class EventType(Enum):
 
 try:
     import db
+
     ser = serial.Serial(config.PORT, config.BPS)
 except Exception as e:
-    logging.error('[{}] {}'.format(db.get_time(),e))
+    logging.error('[{}] {}'.format(db.get_time(), e))
     os._exit(0)
 
 que = queue.Queue()
@@ -32,32 +33,37 @@ que = queue.Queue()
 
 def receive_thread():
     while not exit_status:
-        data = ser.read(1)
-        if data == b'\x00':
-            continue
-        if data == b'\xfd':
-            card_id = []
-            for i in range(0, 4):
-                card_id.append(int.from_bytes(ser.read(1),'little'))
-            if db.verify(card_id):
-                unlock()
-            else:
-                di()
+        try:
+            data = ser.read(1)
+            if data == b'\x00':
+                continue
+            if data == b'\xfd':
+                card_id = []
+                for i in range(0, 4):
+                    card_id.append(int.from_bytes(ser.read(1), 'little'))
+                if db.verify(card_id):
+                    unlock()
+                else:
+                    di()
+        except Exception as e:
+            logging.error('[{}] ERROR!! {}'.format(db.get_time(), e))
 
 
 def send_thread():
     while not exit_status:
-        data = que.get()
-        if data.type == EventType.send:
+        try:
+            data = que.get()
             ser.write(data.value)
+        except Exception as e:
+            logging.error('[{}] ERROR!! {}'.format(db.get_time(), e))
 
 
 def unlock():
-    que.put(Event(EventType.send, b'\x01'))
+    que.put(SendItem(b'\x01'))
 
 
 def di():
-    que.put(Event(EventType.send, b'\x02'))
+    que.put(SendItem(b'\x02'))
 
 
 if __name__ == "__main__":
