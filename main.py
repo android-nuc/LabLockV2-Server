@@ -61,8 +61,7 @@ def send_thread():
     global exit_status
     while not exit_status:
         try:
-            data = que.get(True, config.TIMEOUT)
-            ser.write(data.value)
+            commit_queue()
         except queue.Empty:  # 读取超时时继续等待
             pass
         except Exception as e:
@@ -70,6 +69,9 @@ def send_thread():
             exit_status = 1
             exit(0)
 
+def commit_queue():
+    data = que.get(True, config.TIMEOUT)
+    ser.write(data.value)
 
 def unlock():
     que.put(SendItem(b'\x01'))
