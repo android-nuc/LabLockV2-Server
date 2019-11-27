@@ -51,6 +51,7 @@ def receive_thread():
                     unlock()
                 else:
                     di()
+        
         except Exception as e:
             logging.error('[{}] ERROR!! {}'.format(db.get_time(), e))
             exit_status = 1
